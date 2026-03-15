@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: promptiva-db
+    environment:
+      POSTGRES_USER: promptiva_user
+      POSTGRES_PASSWORD: promptiva_password_123
+      POSTGRES_DB: promptiva_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promptiva_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - promptiva-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: promptiva-backend
+    environment:
+      DATABASE_URL: postgresql://promptiva_user:promptiva_password_123@db:5432/promptiva_db
+      FRONTEND_URL: http://localhost:3000,http://localhost:5173
+      SECRET_KEY: your-super-secret-key-change-this-in-production
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./Backend:/app
+    networks:
+      - promptiva-network
+    restart: unless-stopped
+
+  # Frontend App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: promptiva-frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - promptiva-network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+networks:
+  promptiva-network:
+    driver: bridge
