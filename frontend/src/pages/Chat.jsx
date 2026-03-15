@@ -93,8 +93,8 @@ export default function Chat() {
   };
 
   const getResponse = () => {
-    if (!result?.response) return "No response available";
-    return result.response;
+    if (!result?.winner?.response) return "No response available";
+    return result.winner.response;
   };
 
   return (
@@ -207,14 +207,6 @@ export default function Chat() {
                           {new Date(result.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      {result.winner_model && (
-                        <div className="meta-item">
-                          <span className="meta-label">Winner</span>
-                          <span className="meta-value badge">
-                            {result.winner_model}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
