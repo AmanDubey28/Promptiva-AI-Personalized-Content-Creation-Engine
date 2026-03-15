@@ -14,9 +14,25 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [theme, setTheme] = useState("dark");
   const [currentChatId, setCurrentChatId] = useState(null);
-  const [selectedModel, setSelectedModel] = useState("all"); // all, gemini, mistral, llama
+  const [selectedContentType, setSelectedContentType] = useState(null);
 
-  const models = ["gemini", "mistral", "llama"];
+  const contentTypes = [
+    { id: "blog", name: "📝 Blog", icon: "📝" },
+    { id: "linkedin", name: "💼 LinkedIn", icon: "💼" },
+    { id: "instagram", name: "📸 Instagram", icon: "📸" },
+    { id: "twitter", name: "𝕏 Twitter", icon: "𝕏" },
+    { id: "email", name: "✉️ Email", icon: "✉️" },
+    { id: "ad", name: "📢 Ad Copy", icon: "📢" },
+  ];
+
+  const contentTypeQuestions = {
+    blog: "Write a compelling blog post about... (e.g., AI trends in 2024)",
+    linkedin: "Create a professional LinkedIn post about... (e.g., career growth)",
+    instagram: "Write a catchy Instagram caption for... (e.g., product launch)",
+    twitter: "Write a witty tweet about... (e.g., current trending topic)",
+    email: "Write a persuasive email subject and body for... (e.g., product promotion)",
+    ad: "Create compelling ad copy for... (e.g., fitness app, eco-friendly product)",
+  };
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "dark";
@@ -59,6 +75,7 @@ export default function Chat() {
       setResult(null);
       setPrompt("");
       setCurrentChatId(null);
+      setSelectedContentType(null);
       setError("");
     }
   };
@@ -75,27 +92,9 @@ export default function Chat() {
     }
   };
 
-  const getBestResponse = () => {
-    if (!result?.responses) return null;
-
-    if (selectedModel === "all") {
-      // Return the winner or first available response
-      return (
-        result.winner_response ||
-        result.responses[0] ||
-        "No response available"
-      );
-    } else {
-      // Return specific model response
-      const modelKey = selectedModel.toLowerCase();
-      const responses = result.responses || {};
-      return responses[modelKey] || "Response not available";
-    }
-  };
-
-  const getResponseFromModel = (modelName) => {
-    const responses = result?.responses || {};
-    return responses[modelName] || "Response not available";
+  const getResponse = () => {
+    if (!result?.response) return "No response available";
+    return result.response;
   };
 
   return (
@@ -114,7 +113,7 @@ export default function Chat() {
 
         <div className="chat-content">
           {!result ? (
-            // Initial State - Center Promptiva
+            // Initial State - Center Promptiva with Content Type Selection
             <div className="welcome-section">
               <div className="welcome-content">
                 <h1 className="welcome-title">
@@ -125,52 +124,53 @@ export default function Chat() {
                   Your AI-Powered Content Creation Assistant
                 </p>
 
-                <div className="examples-grid">
-                  <div
-                    className="example-card"
-                    onClick={() =>
-                      setPrompt(
-                        "Write a compelling product description for an eco-friendly water bottle"
-                      )
-                    }
-                  >
-                    <span>💡</span>
-                    <p>Write a product description</p>
+                {!selectedContentType ? (
+                  // Content Type Selection
+                  <div className="content-type-selection">
+                    <p className="selection-label">Choose a content type to get started:</p>
+                    <div className="content-type-grid">
+                      {contentTypes.map((type) => (
+                        <div
+                          key={type.id}
+                          className="content-type-card"
+                          onClick={() => setSelectedContentType(type.id)}
+                        >
+                          <span className="type-icon">{type.icon}</span>
+                          <p className="type-name">{type.name}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div
-                    className="example-card"
-                    onClick={() =>
-                      setPrompt(
-                        "Create an engaging social media post about sustainable living"
-                      )
-                    }
-                  >
-                    <span>📱</span>
-                    <p>Create social media content</p>
+                ) : (
+                  // Content Type Prompts
+                  <div className="content-prompts">
+                    <button
+                      className="back-btn"
+                      onClick={() => setSelectedContentType(null)}
+                    >
+                      ← Back to types
+                    </button>
+                    <p className="prompts-header">
+                      {contentTypes.find((t) => t.id === selectedContentType)?.name || "Content"}
+                    </p>
+                    <div className="prompts-grid">
+                      {[
+                        `${contentTypeQuestions[selectedContentType]} - Technology`,
+                        `${contentTypeQuestions[selectedContentType]} - Business`,
+                        `${contentTypeQuestions[selectedContentType]} - Life & Wellness`,
+                        `${contentTypeQuestions[selectedContentType]} - Creative`,
+                      ].map((prompt, idx) => (
+                        <div
+                          key={idx}
+                          className="prompt-card"
+                          onClick={() => setPrompt(prompt)}
+                        >
+                          <p>{prompt}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div
-                    className="example-card"
-                    onClick={() =>
-                      setPrompt(
-                        "Generate a blog post outline for a tech article"
-                      )
-                    }
-                  >
-                    <span>📝</span>
-                    <p>Blog post outline</p>
-                  </div>
-                  <div
-                    className="example-card"
-                    onClick={() =>
-                      setPrompt(
-                        "Design a marketing campaign for a fitness app"
-                      )
-                    }
-                  >
-                    <span>🎨</span>
-                    <p>Marketing campaign</p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           ) : (
@@ -197,37 +197,6 @@ export default function Chat() {
                   </div>
 
                   {error && <div className="error-message">{error}</div>}
-
-                  {/* Model Selector */}
-                  <div className="model-selector">
-                    <label>Response Type:</label>
-                    <div className="model-buttons">
-                      <button
-                        className={`model-btn ${selectedModel === "all" ? "active" : ""}`}
-                        onClick={() => setSelectedModel("all")}
-                      >
-                        Best Response
-                      </button>
-                      <button
-                        className={`model-btn ${selectedModel === "gemini" ? "active" : ""}`}
-                        onClick={() => setSelectedModel("gemini")}
-                      >
-                        Option 1
-                      </button>
-                      <button
-                        className={`model-btn ${selectedModel === "mistral" ? "active" : ""}`}
-                        onClick={() => setSelectedModel("mistral")}
-                      >
-                        Option 2
-                      </button>
-                      <button
-                        className={`model-btn ${selectedModel === "llama" ? "active" : ""}`}
-                        onClick={() => setSelectedModel("llama")}
-                      >
-                        Option 3
-                      </button>
-                    </div>
-                  </div>
 
                   {/* Result Meta */}
                   {result && (
@@ -258,13 +227,11 @@ export default function Chat() {
                 {!isLoading && (
                   <div className="response-panel">
                     <div className="response-header">
-                      <h3 className="response-title">
-                        {selectedModel === "all" ? "Best Response" : `Option ${["gemini", "mistral", "llama"].indexOf(selectedModel) + 1}`}
-                      </h3>
+                      <h3 className="response-title">Response</h3>
                       <button
                         className="copy-btn"
                         onClick={() => {
-                          const text = getBestResponse();
+                          const text = getResponse();
                           if (typeof text === "string") {
                             navigator.clipboard.writeText(text);
                             alert("Copied to clipboard!");
@@ -276,11 +243,11 @@ export default function Chat() {
                     </div>
 
                     <div className="response-content">
-                      {typeof getBestResponse() === "string" ? (
-                        <p>{getBestResponse()}</p>
+                      {typeof getResponse() === "string" ? (
+                        <p>{getResponse()}</p>
                       ) : (
                         <p className="error">
-                          {getBestResponse()?.message || "Error in response"}
+                          {getResponse()?.message || "Error in response"}
                         </p>
                       )}
                     </div>
