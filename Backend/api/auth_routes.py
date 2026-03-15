@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, validator
 from database import get_db
 from models import User
 from auth import get_password_hash, verify_password, create_access_token, decode_access_token
@@ -15,6 +15,12 @@ class UserRegisterRequest(BaseModel):
     username: str
     password: str
     password_confirm: str
+
+    @validator("email")
+    def email_must_be_valid(cls, v):
+        if not v or "@" not in v:
+            raise ValueError("Email must be valid")
+        return v
 
     @validator("username")
     def username_length(cls, v):
@@ -38,7 +44,7 @@ class UserRegisterRequest(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
-    email: str
+    username: str
     password: str
 
 
@@ -104,13 +110,13 @@ async def register(request: UserRegisterRequest, db: Session = Depends(get_db)):
 async def login(request: UserLoginRequest, db: Session = Depends(get_db)):
     """Login user and return access token"""
     
-    # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
+    # Find user by username
+    user = db.query(User).filter(User.username == request.username).first()
     
     if not user or not verify_password(request.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

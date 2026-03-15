@@ -19,7 +19,7 @@ app = FastAPI(title="Promptiva - AI Personal Content Creation Engine", version="
 # CORS configuration - allow development and production
 frontend_urls = os.getenv("FRONTEND_URL", "http://localhost:5173,http://localhost:5174").split(",")
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware, 
     allow_origins=frontend_urls,
     allow_credentials=True,
     allow_methods=["*"],

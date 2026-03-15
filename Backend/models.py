@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -22,7 +22,7 @@ class Generation(Base):
     __tablename__ = "generations"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     prompt = Column(Text, nullable=False)
     model_responses = Column(JSON, nullable=False)  # Store all model responses
     comparison = Column(JSON, nullable=True)  # Store comparison result
@@ -30,4 +30,5 @@ class Generation(Base):
     winner_response = Column(Text, nullable=True)  # Best response
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
-    # Relationships (optional, if you set up ForeignKey)
+    # Relationships
+    user = relationship("User", back_populates="generations")

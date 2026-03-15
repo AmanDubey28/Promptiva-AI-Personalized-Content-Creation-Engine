@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:8000/api"
+    baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 });
 
 // Add token to requests
@@ -33,9 +33,9 @@ export const register = async (email, username, password, passwordConfirm) => {
     return response.data;
 };
 
-export const login = async (email, password) => {
+export const login = async (username, password) => {
     const response = await api.post("/auth/login", {
-        email,
+        username,
         password
     });
     return response.data;
