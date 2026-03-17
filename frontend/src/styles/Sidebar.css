@@ -346,3 +346,124 @@
     left: 0;
   }
 }
+
+/* History Item Wrapper with Menu */
+.history-item-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  padding: 0 12px;
+}
+
+.history-item-wrapper:hover .history-menu-btn {
+  opacity: 1;
+  visibility: visible;
+}
+
+.history-item {
+  flex: 1;
+}
+
+.history-menu-btn {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 149, 0, 0.6);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.sidebar.light .history-menu-btn {
+  color: rgba(255, 107, 53, 0.6);
+}
+
+.history-menu-btn:hover {
+  background: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+}
+
+.history-menu-wrapper {
+  position: relative;
+}
+
+.context-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 1000;
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.sidebar.light .context-menu {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 149, 0, 0.2);
+}
+
+.context-menu-item {
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.sidebar.light .context-menu-item {
+  color: #333;
+}
+
+.context-menu-item:hover {
+  background: rgba(255, 149, 0, 0.2);
+  color: #ff9500;
+}
+
+.context-menu-item.delete {
+  border-top: 1px solid rgba(255, 149, 0, 0.1);
+  color: rgba(255, 107, 53, 0.8);
+}
+
+.context-menu-item.delete:hover {
+  background: rgba(255, 107, 53, 0.15);
+  color: #ff6b35;
+}
+
+.history-item-edit {
+  flex: 1;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: rgba(255, 149, 0, 0.15);
+  border: 1px solid rgba(255, 149, 0, 0.4);
+  border-radius: 6px;
+  color: #ff9500;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.sidebar.light .edit-input {
+  background: rgba(255, 149, 0, 0.1);
+  color: #ff6b35;
+  border-color: rgba(255, 149, 0, 0.3);
+}

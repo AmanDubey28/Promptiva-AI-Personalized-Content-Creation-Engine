@@ -206,3 +206,66 @@ async def get_generation(
         "winner_response": generation.winner_response,
         "created_at": generation.created_at.isoformat()
     }
+
+
+class UpdateGenerationRequest(BaseModel):
+    prompt: str
+
+
+@router.patch("/history/{generation_id}")
+async def update_generation(
+    generation_id: int,
+    request: UpdateGenerationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a generation (rename prompt)"""
+    generation = db.query(Generation).filter(
+        (Generation.id == generation_id) & (Generation.user_id == current_user.id)
+    ).first()
+    
+    if not generation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation not found"
+        )
+    
+    generation.prompt = request.prompt
+    db.commit()
+    db.refresh(generation)
+    
+    return {
+        "id": generation.id,
+        "prompt": generation.prompt,
+        "model_responses": generation.model_responses,
+        "comparison": generation.comparison,
+        "winner_model": generation.winner_model,
+        "winner_response": generation.winner_response,
+        "created_at": generation.created_at.isoformat()
+    }
+
+
+@router.delete("/history/{generation_id}")
+async def delete_generation(
+    generation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a generation"""
+    generation = db.query(Generation).filter(
+        (Generation.id == generation_id) & (Generation.user_id == current_user.id)
+    ).first()
+    
+    if not generation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Generation not found"
+        )
+    
+    db.delete(generation)
+    db.commit()
+    
+    return {
+        "message": "Generation deleted successfully",
+        "id": generation_id
+    }

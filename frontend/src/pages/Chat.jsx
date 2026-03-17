@@ -6,7 +6,12 @@ import ThemeToggle from "../components/ThemeToggle";
 import QuoteDisplay from "../components/QuoteDisplay";
 import "../styles/Chat.css";
 
-export default function Chat() {
+const Chat = () => {
+  // Wrapper function for backward compatibility
+  return <ChatComponent />;
+};
+
+function ChatComponent() {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState(null);
@@ -15,6 +20,18 @@ export default function Chat() {
   const [theme, setTheme] = useState("dark");
   const [currentChatId, setCurrentChatId] = useState(null);
   const [selectedContentType, setSelectedContentType] = useState(null);
+  const [showQuestions, setShowQuestions] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  
+  const questionSequence = ['tone', 'length', 'audience', 'style'];
+
+  const [answers, setAnswers] = useState({
+    tone: "",
+    length: "",
+    audience: "",
+    style: "",
+    specifics: "",
+  });
 
   const contentTypes = [
     { id: "blog", name: "📝 Blog", icon: "📝" },
@@ -25,13 +42,11 @@ export default function Chat() {
     { id: "ad", name: "📢 Ad Copy", icon: "📢" },
   ];
 
-  const contentTypeQuestions = {
-    blog: "Write a compelling blog post about... (e.g., AI trends in 2024)",
-    linkedin: "Create a professional LinkedIn post about... (e.g., career growth)",
-    instagram: "Write a catchy Instagram caption for... (e.g., product launch)",
-    twitter: "Write a witty tweet about... (e.g., current trending topic)",
-    email: "Write a persuasive email subject and body for... (e.g., product promotion)",
-    ad: "Create compelling ad copy for... (e.g., fitness app, eco-friendly product)",
+  const questionOptions = {
+    tone: ["Professional", "Casual", "Friendly", "Humorous", "Inspirational"],
+    length: ["Short (< 100 words)", "Medium (100-300 words)", "Long (300+ words)"],
+    audience: ["B2B", "B2C", "Gen Z", "Professionals", "Students"],
+    style: ["Storytelling", "Data-driven", "Persuasive", "Educational", "Creative"],
   };
 
   useEffect(() => {
@@ -43,6 +58,67 @@ export default function Chat() {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
+  };
+
+  const handleContentTypeSelect = (typeId) => {
+    setSelectedContentType(typeId);
+    setShowQuestions(true);
+    setCurrentQuestionIndex(0);
+    setAnswers({ tone: "", length: "", audience: "", style: "", specifics: "" });
+  };
+
+  const handleNextQuestion = (value) => {
+    if (currentQuestionIndex < questionSequence.length) {
+      const currentField = questionSequence[currentQuestionIndex];
+      setAnswers({ ...answers, [currentField]: value });
+      
+      // Move to next question if not at the end
+      if (currentQuestionIndex < questionSequence.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        // Show specifics field after answers
+        setCurrentQuestionIndex(questionSequence.length);
+      }
+    }
+  };
+
+  const handleSkipQuestion = () => {
+    if (currentQuestionIndex < questionSequence.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setCurrentQuestionIndex(questionSequence.length);
+    }
+  };
+
+  const handleGenerateWithAnswers = async () => {
+    if (!answers.specifics?.trim()) {
+      setError("Please describe what you want to create.");
+      return;
+    }
+
+    // Build context from answers
+    const context = `
+Content Type: ${selectedContentType}
+Tone: ${answers.tone || "Not specified"}
+Length: ${answers.length || "Not specified"}
+Target Audience: ${answers.audience || "Not specified"}
+Style: ${answers.style || "Not specified"}
+Details: ${answers.specifics}
+    `.trim();
+
+    setIsLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const response = await generateContent(context, false);
+      setResult(response);
+      setCurrentChatId(response.id);
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to generate content");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGenerate = async () => {
@@ -76,6 +152,8 @@ export default function Chat() {
       setPrompt("");
       setCurrentChatId(null);
       setSelectedContentType(null);
+      setShowQuestions(false);
+      setAnswers({ tone: "", length: "", audience: "", style: "", specifics: "" });
       setError("");
     }
   };
@@ -97,24 +175,39 @@ export default function Chat() {
     return result.winner.response;
   };
 
+  const handleNavigateHome = () => {
+    handleNewChat();
+  };
+
   return (
     <div className={`chat-container ${theme}`}>
-      <Sidebar theme={theme} onNewChat={handleNewChat} currentChatId={currentChatId} />
+      <Sidebar 
+        theme={theme} 
+        onNewChat={handleNewChat} 
+        currentChatId={currentChatId}
+        onToggleTheme={toggleTheme}
+      />
 
       <div className="chat-main">
-        {/* Top Bar */}
-        <div className="chat-top-bar">
-          <div className="top-bar-branding">
-            <span className="app-logo">✨</span>
-            <span className="app-name">Promptiva</span>
-          </div>
-          <ThemeToggle theme={theme} onToggle={toggleTheme} />
+        <div className="chat-header-top">
+          <button className="home-btn" onClick={handleNavigateHome} title="Go to Home">
+            ✨ Promptiva
+          </button>
         </div>
 
         <div className="chat-content">
-          {!result ? (
+          {!result && !isLoading ? (
             // Initial State - Center Promptiva with Content Type Selection
             <div className="welcome-section">
+              <div className="animated-bg">
+                <div className="gradient-orb orb-1"></div>
+                <div className="gradient-orb orb-2"></div>
+                <div className="gradient-orb orb-3"></div>
+                <div className="floating-particle particle-1"></div>
+                <div className="floating-particle particle-2"></div>
+                <div className="floating-particle particle-3"></div>
+              </div>
+
               <div className="welcome-content">
                 <h1 className="welcome-title">
                   <span className="title-icon">✨</span>
@@ -127,55 +220,174 @@ export default function Chat() {
                 {!selectedContentType ? (
                   // Content Type Selection
                   <div className="content-type-selection">
-                    <p className="selection-label">Choose a content type to get started:</p>
+                    <p className="selection-label">Choose how you want to create content:</p>
                     <div className="content-type-grid">
-                      {contentTypes.map((type) => (
+                      {contentTypes.map((type, idx) => (
                         <div
                           key={type.id}
                           className="content-type-card"
-                          onClick={() => setSelectedContentType(type.id)}
+                          onClick={() => handleContentTypeSelect(type.id)}
+                          style={{ animationDelay: `${idx * 0.1}s` }}
                         >
                           <span className="type-icon">{type.icon}</span>
                           <p className="type-name">{type.name}</p>
                         </div>
                       ))}
                     </div>
+
+                    <div className="prompt-section">
+                      <p className="section-divider">Or ask directly:</p>
+                      <div className="direct-prompt">
+                        <textarea
+                          value={prompt}
+                          onChange={(e) => setPrompt(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Type your prompt here... (Ctrl+Enter to generate)"
+                          className="prompt-area"
+                        />
+                        <button
+                          onClick={handleGenerate}
+                          disabled={isLoading || !prompt.trim()}
+                          className="direct-generate-btn"
+                        >
+                          ✨ Generate
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  // Content Type Prompts
-                  <div className="content-prompts">
+                  // Questions Form - Progressive
+                  <div className="questions-form">
                     <button
                       className="back-btn"
-                      onClick={() => setSelectedContentType(null)}
+                      onClick={() => {
+                        setSelectedContentType(null);
+                        setShowQuestions(false);
+                        setCurrentQuestionIndex(0);
+                      }}
                     >
                       ← Back to types
                     </button>
-                    <p className="prompts-header">
+                    <p className="form-title">
                       {contentTypes.find((t) => t.id === selectedContentType)?.name || "Content"}
                     </p>
-                    <div className="prompts-grid">
-                      {[
-                        `${contentTypeQuestions[selectedContentType]} - Technology`,
-                        `${contentTypeQuestions[selectedContentType]} - Business`,
-                        `${contentTypeQuestions[selectedContentType]} - Life & Wellness`,
-                        `${contentTypeQuestions[selectedContentType]} - Creative`,
-                      ].map((prompt, idx) => (
-                        <div
-                          key={idx}
-                          className="prompt-card"
-                          onClick={() => setPrompt(prompt)}
-                        >
-                          <p>{prompt}</p>
+                    <p className="form-subtitle">Answer a few quick questions:</p>
+                    <p className="question-counter">Question {Math.min(currentQuestionIndex + 1, questionSequence.length + 1)} of {questionSequence.length + 1}</p>
+
+                    {/* Progressive Questions */}
+                    <div className="progressive-questions">
+                      {/* Tone - Question 1 */}
+                      {currentQuestionIndex === 0 && (
+                        <div className="question-group animated-question">
+                          <label className="question-label">What tone should it have?</label>
+                          <div className="options-grid">
+                            {questionOptions.tone.map((option) => (
+                              <button
+                                key={option}
+                                className={`option-btn ${answers.tone === option ? "active" : ""}`}
+                                onClick={() => handleNextQuestion(option)}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                          <button className="skip-btn" onClick={handleSkipQuestion}>
+                            ⏭️ Skip
+                          </button>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Length - Question 2 */}
+                      {currentQuestionIndex === 1 && (
+                        <div className="question-group animated-question">
+                          <label className="question-label">How long should it be?</label>
+                          <div className="options-grid">
+                            {questionOptions.length.map((option) => (
+                              <button
+                                key={option}
+                                className={`option-btn ${answers.length === option ? "active" : ""}`}
+                                onClick={() => handleNextQuestion(option)}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                          <button className="skip-btn" onClick={handleSkipQuestion}>
+                            ⏭️ Skip
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Audience - Question 3 */}
+                      {currentQuestionIndex === 2 && (
+                        <div className="question-group animated-question">
+                          <label className="question-label">Who's your audience?</label>
+                          <div className="options-grid">
+                            {questionOptions.audience.map((option) => (
+                              <button
+                                key={option}
+                                className={`option-btn ${answers.audience === option ? "active" : ""}`}
+                                onClick={() => handleNextQuestion(option)}
+                              >
+                            {option}
+                              </button>
+                            ))}
+                          </div>
+                          <button className="skip-btn" onClick={handleSkipQuestion}>
+                            ⏭️ Skip
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Style - Question 4 */}
+                      {currentQuestionIndex === 3 && (
+                        <div className="question-group animated-question">
+                          <label className="question-label">What's your preferred style?</label>
+                          <div className="options-grid">
+                            {questionOptions.style.map((option) => (
+                              <button
+                                key={option}
+                                className={`option-btn ${answers.style === option ? "active" : ""}`}
+                                onClick={() => handleNextQuestion(option)}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                          <button className="skip-btn" onClick={handleSkipQuestion}>
+                            ⏭️ Skip
+                          </button>
+                        </div>
+                      )}
+
+                    {/* Specifics - Question 5 */}
+                    {currentQuestionIndex === 4 && (
+                    <div className="question-group animated-question full-width">
+                      <label className="question-label">Tell us what you want to create:</label>
+                      <textarea
+                        value={answers.specifics}
+                        onChange={(e) => setAnswers({ ...answers, specifics: e.target.value })}
+                        placeholder="Be as specific as possible... (e.g., 'A blog post about 5 productivity tips for remote workers')"
+                        className="specifics-input"
+                      />
+                      {error && <div className="error-message">{error}</div>}
+                      <button
+                        onClick={handleGenerateWithAnswers}
+                        disabled={isLoading || !answers.specifics.trim()}
+                        className="generate-btn-main"
+                      >
+                        {isLoading ? "✨ Generating..." : "✨ Create Content"}
+                      </button>
+                    </div>
+                    )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            // Split Screen View
-            <div className="split-screen">
+            // Split Screen View - Shows immediately on loading
+            <div className={`split-screen ${isLoading ? "loading" : ""}`}>
               {/* Left Side - Input & Controls */}
               <div className="split-left">
                 <div className="input-section">
@@ -183,7 +395,6 @@ export default function Chat() {
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      onKeyPress={handleKeyPress}
                       placeholder="Enter your prompt here... (Ctrl+Enter to generate)"
                       className="prompt-input"
                     />
@@ -249,30 +460,9 @@ export default function Chat() {
             </div>
           )}
         </div>
-
-        {/* Multi-line Input Footer (Initial State) */}
-        {!result && (
-          <div className="chat-input-footer">
-            <div className="input-wrapper">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Enter your prompt here... (Ctrl+Enter to generate)"
-                className="prompt-input"
-              />
-              <button
-                onClick={handleGenerate}
-                disabled={isLoading}
-                className="generate-btn-footer"
-              >
-                {isLoading ? "✨ Generating..." : "✨ Generate"}
-              </button>
-            </div>
-            {error && <div className="error-message">{error}</div>}
-          </div>
-        )}
       </div>
     </div>
   );
 }
+
+export default Chat;

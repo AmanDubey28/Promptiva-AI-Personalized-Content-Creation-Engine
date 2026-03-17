@@ -67,6 +67,18 @@ export const getGeneration = async (generationId) => {
     return response.data;
 };
 
+export const updateGeneration = async (generationId, prompt) => {
+    const response = await api.patch(`/history/${generationId}`, {
+        prompt
+    });
+    return response.data;
+};
+
+export const deleteGeneration = async (generationId) => {
+    const response = await api.delete(`/history/${generationId}`);
+    return response.data;
+};
+
 // Auth helper functions
 export const setAuthToken = (token) => {
     localStorage.setItem("access_token", token);

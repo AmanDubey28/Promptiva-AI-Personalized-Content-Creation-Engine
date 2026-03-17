@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAuthToken, getHistory } from "../services/api";
+import { clearAuthToken, getHistory, updateGeneration, deleteGeneration } from "../services/api";
 import "../styles/Sidebar.css";
 
-export default function Sidebar({ theme, onNewChat, currentChatId }) {
+export default function Sidebar({ theme, onNewChat, currentChatId, onToggleTheme }) {
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [user, setUser] = useState(null);
+  const [contextMenuOpen, setContextMenuOpen] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
   useEffect(() => {
     fetchHistory();
@@ -32,6 +35,41 @@ export default function Sidebar({ theme, onNewChat, currentChatId }) {
 
   const truncateText = (text, length) => {
     return text.length > length ? text.substring(0, length) + "..." : text;
+  };
+
+  const handleRenameClick = (item) => {
+    setEditingId(item.id);
+    setEditingText(item.prompt);
+    setContextMenuOpen(null);
+  };
+
+  const handleSaveRename = async (id) => {
+    try {
+      if (!editingText.trim()) {
+        setEditingId(null);
+        return;
+      }
+      await updateGeneration(id, editingText);
+      const updatedHistory = history.map((item) =>
+        item.id === id ? { ...item, prompt: editingText } : item
+      );
+      setHistory(updatedHistory);
+      setEditingId(null);
+    } catch (err) {
+      console.error("Failed to rename:", err);
+      setEditingId(null);
+    }
+  };
+
+  const handleDeleteClick = async (id) => {
+    try {
+      await deleteGeneration(id);
+      setHistory(history.filter((item) => item.id !== id));
+      setContextMenuOpen(null);
+    } catch (err) {
+      console.error("Failed to delete:", err);
+      setContextMenuOpen(null);
+    }
   };
 
   return (
@@ -77,18 +115,71 @@ export default function Sidebar({ theme, onNewChat, currentChatId }) {
           {history.length > 0 ? (
             <div className="history-list">
               {history.map((item) => (
-                <div
-                  key={item.id}
-                  className={`history-item ${
-                    currentChatId === item.id ? "active" : ""
-                  }`}
-                  onClick={() => onNewChat(item)}
-                  title={item.prompt}
-                >
-                  <span className="history-icon">💬</span>
-                  <span className="history-text">
-                    {truncateText(item.prompt, 30)}
-                  </span>
+                <div key={item.id} className="history-item-wrapper">
+                  {editingId === item.id ? (
+                    <div className="history-item-edit">
+                      <input
+                        type="text"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onBlur={() => handleSaveRename(item.id)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") handleSaveRename(item.id);
+                          if (e.key === "Escape") setEditingId(null);
+                        }}
+                        autoFocus
+                        className="edit-input"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className={`history-item ${
+                          currentChatId === item.id ? "active" : ""
+                        }`}
+                        onClick={() => onNewChat(item)}
+                        title={item.prompt}
+                      >
+                        <span className="history-icon">💬</span>
+                        <span className="history-text">
+                          {truncateText(item.prompt, 25)}
+                        </span>
+                      </div>
+                      <div className="history-menu-wrapper">
+                        <button
+                          className="history-menu-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setContextMenuOpen(contextMenuOpen === item.id ? null : item.id);
+                          }}
+                        >
+                          ⋮
+                        </button>
+                        {contextMenuOpen === item.id && (
+                          <div className="context-menu">
+                            <button
+                              className="context-menu-item"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRenameClick(item);
+                              }}
+                            >
+                              ✏️ Rename
+                            </button>
+                            <button
+                              className="context-menu-item delete"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(item.id);
+                              }}
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -100,6 +191,14 @@ export default function Sidebar({ theme, onNewChat, currentChatId }) {
 
       {/* Footer */}
       <div className="sidebar-footer">
+        <button 
+          className="theme-toggle-btn" 
+          onClick={onToggleTheme}
+          title={theme === "dark" ? "Light Mode" : "Dark Mode"}
+        >
+          {theme === "dark" ? "☀️" : "🌙"}
+        </button>
+
         {!isCollapsed && user && (
           <div className="user-info">
             <div className="user-avatar">
