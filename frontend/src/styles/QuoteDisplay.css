@@ -1,0 +1,131 @@
+/* Quote Display Styles */
+.quote-display {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(255, 149, 0, 0.05),
+    rgba(255, 107, 53, 0.02),
+    transparent
+  );
+  border-radius: 16px;
+  padding: 40px;
+}
+
+.quote-content {
+  text-align: center;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 149, 0, 0.2);
+  border-top: 3px solid #ff9500;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Quote Text */
+.quote-text {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: rgba(232, 227, 218, 0.95);
+  margin: 0;
+  font-style: italic;
+  animation: fadeInQuote 0.8s ease;
+}
+
+@keyframes fadeInQuote {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Quote Author */
+.quote-author {
+  font-size: 14px;
+  color: rgba(255, 149, 0, 0.8);
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  animation: fadeInQuote 0.8s ease 0.2s both;
+}
+
+/* Loading Text */
+.loading-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Light Mode */
+.light .quote-text {
+  color: rgba(26, 26, 26, 0.9);
+}
+
+.light .quote-author {
+  color: rgba(255, 107, 53, 0.8);
+}
+
+.light .loading-text {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .quote-display {
+    padding: 30px 20px;
+  }
+
+  .quote-text {
+    font-size: 16px;
+  }
+
+  .quote-author {
+    font-size: 12px;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+  }
+}

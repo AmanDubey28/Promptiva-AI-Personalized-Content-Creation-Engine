@@ -1,0 +1,94 @@
+/* Theme Toggle Styles */
+.theme-toggle {
+  width: 50px;
+  height: 28px;
+  border: 2px solid rgba(255, 149, 0, 0.4);
+  background: rgba(255, 149, 0, 0.1);
+  border-radius: 24px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  transition: all 0.3s ease;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 149, 0, 0.15);
+  border-color: rgba(255, 149, 0, 0.6);
+}
+
+.toggle-sun,
+.toggle-moon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle.dark .toggle-moon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.theme-toggle.dark .toggle-sun {
+  opacity: 0.3;
+  transform: scale(0.8);
+}
+
+.theme-toggle.light .toggle-sun {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.theme-toggle.light .toggle-moon {
+  opacity: 0.3;
+  transform: scale(0.8);
+}
+
+.toggle-slider {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff9500, #ff6b35);
+  border-radius: 50%;
+  left: 3px;
+  transition: left 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.3);
+}
+
+.theme-toggle.light .toggle-slider {
+  left: 27px;
+}
+
+/* Active state */
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .theme-toggle {
+    width: 48px;
+    height: 26px;
+  }
+
+  .toggle-sun,
+  .toggle-moon {
+    font-size: 11px;
+  }
+
+  .toggle-slider {
+    width: 18px;
+    height: 18px;
+  }
+
+  .theme-toggle.light .toggle-slider {
+    left: 26px;
+  }
+}
